@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter.font import Font
-
+import math
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
 
@@ -19,22 +19,67 @@ def main():
     def closeWindow():
         root.destroy()
         main()
+
+    def militaryToStandard(time):
+        time = int(time)
+    
+        hours = math.floor(time /100)
+        minutes = (time % 100)*.6
+    
+        if minutes >= 60:
+            extra_hours = minutes // 60
+            minutes = minutes % 60
+            hours += extra_hours
+
+        period = "AM"
+        if hours >= 12:
+            period = "PM"
+            if hours > 12:
+                hours -= 12
+        if hours == 0:
+            hours = 12
+        if time == 2400:
+            period = "AM"
+            
+        minutes = int(minutes)
         
-    def displayResults(timeDifference):
-        def open_new_window(timeDifference):
+        if minutes ==0:
+            return str(hours) +":"+ str(minutes) + "0" + period
+        return str(hours) + ":"+ str(minutes) + period
+
+        
+    def displayResults(timeDifference, day1, day2, day3, departingCity, arrivingCity):
+        def open_new_window(timeDifference, day1, day2, day3, departingCity, arrivingCity):
             root.destroy()
         
             new_window = Tk()
             new_window.title("Results")
             new_window.geometry("450x200")
 
-            label = Label(new_window, text="Time Difference: " + str(timeDifference) + " hours")
+            day1 = militaryToStandard(day1)
+            day2 = militaryToStandard(day2)
+            day3 = militaryToStandard(day3)
+
+            infoString = arrivingCity + " is " + str(abs(round(timeDifference,3))) + " hours ahead of " + departingCity
+            if(timeDifference < 0):
+                infoString = infoString.replace("ahead", "behind")
+
+            label = Label(new_window, text=infoString)
             label.pack()
+
+            label2 = Label(new_window, text="Sleep at " + str(day1)+ " 1 day before your departure") 
+            label2.pack()
+
+            label3 = Label(new_window,  text="Sleep at " + str(day2)+ " 2 days before your departure")
+            label3.pack()
+
+            label4 = Label(new_window,  text="Sleep at " + str(day3)+ " 3 days before your departure")
+            label4.pack()
 
             new_window.mainloop()
 
         try:    
-            open_new_window(timeDifference)
+            open_new_window(timeDifference, day1, day2, day3, departingCity, arrivingCity)
         except Exception as error:
             print("ERROR in displayResults! give a fuck", error)
         return
@@ -52,28 +97,33 @@ def main():
     def getTimeZone(longitude):
         try:
             print("Getting Timezone")
-            #negative = False
-            #if(longitude < 0):
-            #    negative = True
-            #    longitude *= -1
-    
-            #degrees = int(longitude)
-            #timeValue = (longitude % 1) * 60
-            #minutes = int(timeValue)
-            #seconds = (timeValue % 1) * 60
-
-            #sumSeconds = (degrees * 3600) + (minutes * 60) + seconds
-            #timeZoneHours = sumSeconds / 15 * 3600
                 
             timeZoneHours = (longitude / 0.004167) / 3600
-            #if(negative):
-            #    timeZoneHours *= -1
             return timeZoneHours
             
 
 
         except:
             print("ERROR in getTimeZone()! give a fuck")
+
+    #convert time format '11:00 PM' to military
+    def standardToMilitary(input):
+        try:
+            time = str(input[6:8])
+            print(time)
+            military = 0
+            if(time == 'PM'):
+                military = 1200
+            hours = int(input[0:2])
+            minutes = int(input [3:5])
+            military = military + (hours * 100) + minutes
+            #print("military time: " , military)
+            return military
+        except:
+            print("Error in standardToMilitary!")
+
+        
+        
  
     def calculate():
         print("Calculating...")
@@ -82,7 +132,9 @@ def main():
             departingCountry = depCountry.get()
             arrivingCity = arrCity.get()
             arrivingCountry = arrCountry.get()
-            sleepTimeValue = int(sleepTime.get())
+            sleepTimeValue = standardToMilitary(sleepTime.get())
+
+
             
             #depCityEntry.selectbackground("red")
             if(departingCity == "" or departingCountry == "" or arrivingCity == "" or arrivingCountry == ""):
@@ -103,21 +155,25 @@ def main():
             arrivingTimezone = getGeoLocation(arrivingCity, arrivingCountry)
             timeDifference = arrivingTimezone - departingTimezone
 
-            print("timeDifference: " + str(timeDifference))
+            offsetPerDay = timeDifference / 3 * 100
+            day1 = sleepTimeValue - offsetPerDay
+            day2 = day1 - offsetPerDay
+            day3 = day2 - offsetPerDay
 
-
-
-
-
-
+            if(day3 > 2400):
+                day3 = day3-2400
+            if(day2 > 2400):
+                day2 = day2-2400
+            if(day1 > 2400):
+                day1 = day1-2400
 
             print("Departing from: " + departingCity + ", " + departingCountry)
-            displayResults(timeDifference)
+            displayResults(timeDifference, day1, day2, day3,departingCity, arrivingCity)
             
 
 
-        except:
-            print("ERROR in calculate()! give a fuck")
+        except Exception as error:
+            print("ERROR in calculate()! give a fuck", error)
             return
             
         
@@ -142,7 +198,7 @@ def main():
     sleepTime = StringVar()        #ex. 2300 [Military time]
 
     root.title("JetLag Calculator")
-    root.geometry("800x1080")
+    #root.geometry("800x1080")
 
     label1 = Label(root, text="Enter the following fields to get you roptimized sleep schedule")
     label1.grid(row=0, column=0, columnspan=2)

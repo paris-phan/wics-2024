@@ -1,12 +1,14 @@
-longitude = 42.15188
-negative = False
-if(longitude < 0):
-    negative = True
-    longitude *= -1
-    
-degrees = int(longitude)
-timeValue = (longitude % 1) * 60
-minutes = int(timeValue)
-seconds = int((timeValue % 1) * 60)
 
-print(degrees, minutes, seconds)
+input = "11:00 AM"
+
+
+time = str(input[6:8])
+
+military = 0
+if(time == 'PM'):
+    military = 1200
+hours = int(input[0:2])
+minutes = int(input [3:5])
+military = military + (hours * 100) + minutes
+#print("military time: " , military)
+print(str(military))
