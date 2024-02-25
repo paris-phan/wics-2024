@@ -1,7 +1,9 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter.font import Font
 
 from geopy.geocoders import Nominatim
+from timezonefinder import TimezoneFinder
 
 
 ##test loc api call
@@ -18,25 +20,61 @@ def main():
         root.destroy()
         main()
         
-    def displayResults():
-        ###TODO: display results
+    def displayResults(timeDifference):
+        def open_new_window(timeDifference):
+            root.destroy()
+        
+            new_window = Tk()
+            new_window.title("Results")
+            new_window.geometry("450x200")
+
+            label = Label(new_window, text="Time Difference: " + str(timeDifference) + " hours")
+            label.pack()
+
+            new_window.mainloop()
+
+        try:    
+            open_new_window(timeDifference)
+        except Exception as error:
+            print("ERROR in displayResults! give a fuck", error)
         return
-    
+        
     def getGeoLocation(city, country):
         try:
-            print("Getting GeoLocation...")
-            address = city + ", " + country
-            geolocator = Nominatim(user_agent="Geopy Library")
-
-            getLoc = geolocator.geocode(address)
-
-            print(getLoc.address)
-            print((getLoc.latitude, getLoc.longitude))
-        except:
+            print("Getting GeoLocation for: " + city + ", " + country)
+            geolocator = Nominatim(user_agent="main")
             
+            location = geolocator.geocode(city + ", " + country)
+            return getTimeZone(location.longitude)
+        except:
             print("ERROR in getGeoLocation()! give a fuck")
- 
+
+    def getTimeZone(longitude):
+        try:
+            print("Getting Timezone")
+            #negative = False
+            #if(longitude < 0):
+            #    negative = True
+            #    longitude *= -1
     
+            #degrees = int(longitude)
+            #timeValue = (longitude % 1) * 60
+            #minutes = int(timeValue)
+            #seconds = (timeValue % 1) * 60
+
+            #sumSeconds = (degrees * 3600) + (minutes * 60) + seconds
+            #timeZoneHours = sumSeconds / 15 * 3600
+                
+            timeZoneHours = (longitude / 0.004167) / 3600
+            #if(negative):
+            #    timeZoneHours *= -1
+            return timeZoneHours
+            
+
+
+        except:
+            print("ERROR in getTimeZone()! give a fuck")
+ 
     def calculate():
         print("Calculating...")
         try:
@@ -44,8 +82,8 @@ def main():
             departingCountry = depCountry.get()
             arrivingCity = arrCity.get()
             arrivingCountry = arrCountry.get()
-            #sleepTime = sleepTime.get()
-            sleepTime= int(sleepTime.get())
+            sleepTimeValue = int(sleepTime.get())
+            
             #depCityEntry.selectbackground("red")
             if(departingCity == "" or departingCountry == "" or arrivingCity == "" or arrivingCountry == ""):
                 print("Missing Inputs")
@@ -57,24 +95,33 @@ def main():
                     arrCityEntry.selectbackground("red")
                 if(arrivingCountry == ""):
                     arrCountryEntry.selectbackground("red")
+                if(sleepTimeValue == ""):
+                    sleepTimeEntry.selectbackground("red")
                 return
             
-            getGeoLocation(departingCity, departingCountry)
+            departingTimezone = getGeoLocation(departingCity, departingCountry)
+            arrivingTimezone = getGeoLocation(arrivingCity, arrivingCountry)
+            timeDifference = arrivingTimezone - departingTimezone
+
+            print("timeDifference: " + str(timeDifference))
+
+
+
+
+
+
+
+            print("Departing from: " + departingCity + ", " + departingCountry)
+            displayResults(timeDifference)
             
 
-    
-    
 
-
-
-
-            
         except:
             print("ERROR in calculate()! give a fuck")
             return
             
         
-        print("Departing from: " + departingCity + ", " + departingCountry)
+
 
 
 
@@ -83,6 +130,7 @@ def main():
 
 
 
+    ### MAIN WINDOW
     ### MAIN WINDOW
 
     root = Tk()
@@ -115,8 +163,8 @@ def main():
     arrCityEntry.grid(row=3, column=1)
     arrCountryEntry = Entry(root, textvariable=arrCountry)
     arrCountryEntry.grid(row=4, column=1)
-    sleepTime = Entry(root, textvariable=sleepTime)
-    sleepTime.grid(row=5, column=1)
+    sleepTimeEntry = Entry(root, textvariable=sleepTime)
+    sleepTimeEntry.grid(row=5, column=1)
 
     calculate = Button(root, text="Calculate", command=calculate)
     calculate.grid(row=6, column=0, columnspan=2)
@@ -132,9 +180,5 @@ def main():
 
 
 main()
-
-
-
-
 
 

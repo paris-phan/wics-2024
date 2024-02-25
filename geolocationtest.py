@@ -1,19 +1,24 @@
 from geopy.geocoders import Nominatim
+ 
+# initialize Nominatim API
+geolocator = Nominatim(user_agent="geolocationtest")
+ 
+ 
+# Latitude & Longitude input
+Latitude = "25.594095"
+Longitude = "85.137566"
+ 
+location = geolocator.reverse(Latitude+","+Longitude)
 
-def getGeoLocation(city, country):
-    try:
-        print("Getting GeoLocation...")
-        address = city + ", " + country
-        geolocator = Nominatim(user_agent="Geopy Library")
-
-        getLoc = geolocator.geocode(address)
-
-        print(getLoc.address)
-        print((getLoc.latitude, getLoc.longitude))
-    except:
-        
-        print("ERROR in getGeoLocation()! give a fuck")
-
-
-print('wtf')
-getGeoLocation("Charlottesville", "United States")
+address = location.raw['address']
+ 
+# traverse the data
+city = address.get('city', '')
+state = address.get('state', '')
+country = address.get('country', '')
+code = address.get('country_code')
+zipcode = address.get('postcode')
+print('City : ', city)
+print('State : ', state)
+print('Country : ', country)
+print('Zip Code : ', zipcode)
